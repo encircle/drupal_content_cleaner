@@ -282,7 +282,7 @@ def get_external_link(url):
         if url.startswith("mailto:") or url.startswith('#'):
             return True
         session = requests.Session()
-        if basic_auth==True:
+        if basic_auth=="True" and tld in url:
             session.auth = (basic_auth_user, basic_auth_pass)
         res = session.get(url, stream=True,timeout=url_timeout)
         if res.status_code == 200:

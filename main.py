@@ -36,9 +36,9 @@ squash_subdomains=config['AppConfig']['squash_subdomains']
 check_links=config['AppConfig']['check_links']
 
 
-basic_auth=onfig['AppConfig']['basic_auth']
+basic_auth=config['AppConfig']['basic_auth']
 basic_auth_user=config['AppConfig']['basic_auth_user']
-basic_auth_pass=onfig['AppConfig']['basic_auth_pass']
+basic_auth_pass=config['AppConfig']['basic_auth_pass']
 
 nowtime=datetime.datetime.now().isoformat().replace(":","_").split(".")[0]
 log.basicConfig( format='%(levelname)s:%(message)s', level=ilog_level, handlers=[
