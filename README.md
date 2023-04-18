@@ -50,10 +50,15 @@ basedir=/path_to_localdrupal_installation
 tld=somesite.org.uk
 
 # if True - any links in the site that point to a subdomain will be converted to a relative link
+# - Note www subdomain links will always be converted whether this value is True or False 
 squash_subdomains=True
 
 # check any links found in content - to make sure they are valid
 check_links=True
+
+#any external images in <img> tags in text content, will be downloaded to [DRUAPL_ROOT]/sites/default/files/external-images
+# to an md5 hased path under this directory and `<img src=` attributes will be updated accordingly
+scrapeexternalimages=True
 
 #basic auth credentials for the site - if basic_auth=True
 basic_auth=False

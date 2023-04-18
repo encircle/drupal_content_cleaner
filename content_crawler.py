@@ -9,20 +9,19 @@ import hashlib
 
 from bs4 import BeautifulSoup
 
-from main import path_filesystem, base_url, tld, tld_re, squash_subdomains, check_links, basic_auth, basic_auth_pass, basic_auth_user
+from main import path_filesystem, base_url, tld, tld_re, squash_subdomains, check_links, basic_auth, basic_auth_pass, \
+    basic_auth_user, scrapeexternalimages
 
-url_timeout=(2.0,30.0)
+url_timeout = (2.0, 30.0)
 
 f = open('field_config.json')
 text_content_fields = json.load(f)
 
 
-def parse_text_content(config,files_all):
+def parse_text_content(config, files_all):
+    files_not_registered = {}
 
-    files_not_registered={}
-
-
-    fw_d7=open("./report/files_in_d7_tags.csv", "w")
+    fw_d7 = open("./report/files_in_d7_tags.csv", "w")
     fw_d7.write("entity type,entity id,field,owner,node url,fid,uri\n")
     fw_d7.flush()
 
@@ -39,12 +38,12 @@ def parse_text_content(config,files_all):
     for text_content_field in text_content_fields:
         field = text_content_field['field']
         entity_id_field = text_content_field['entity_id']
-        entity_type= text_content_field['entity_type']
+        entity_type = text_content_field['entity_type']
         table = text_content_field['table']
         table_rev = text_content_field['table_rev']
-        #query = f"select {field},{entity_id} from {table} where entity_id=32090"
+        # query = f"select {field},{entity_id} from {table} where entity_id=32090"
 
-        if entity_type=="node":
+        if entity_type == "node":
             query = f"""select field.{field},field.{entity_id_field},nfd.uid,ufd.name,ufd.mail from {table} field
             join node_field_data nfd on field.{entity_id_field}=nfd.nid
             join users_field_data ufd on ufd.uid=nfd.uid  
@@ -52,23 +51,21 @@ def parse_text_content(config,files_all):
         else:
             query = f"select field.{field},field.{entity_id_field} from {table} field"  # " LIMIT 100"
 
-
-
         log.info(f"Parsing Field {field} in table {table}")
         with connection.cursor() as cursor:
             cursor.execute(query)
-            records=cursor.fetchall()
-        for record in records: #:= cursor.fetchone():
-            has_edits=False
+            records = cursor.fetchall()
+        for record in records:  #:= cursor.fetchone():
+            has_edits = False
             content = record[0]
 
-            if not content or len(content)<1:
+            if not content or len(content) < 1:
                 continue
             entity_id = record[1]
             node_url = base_url + "/" + entity_type + "/" + str(entity_id)
-            if entity_type=="node":
-                user_name=record[3]
-                user_email= record[4]
+            if entity_type == "node":
+                user_name = record[3]
+                user_email = record[4]
             else:
                 user_name = ''
                 user_email = ''
@@ -81,28 +78,30 @@ def parse_text_content(config,files_all):
                 src = link.get('src')
                 if src.startswith("data:"):
                     continue
-                #log.info(f"\timage - {table}:{entity_id}=" + src)
-                result=check_for_local_uri_and_reformat(src)
+                # log.info(f"\timage - {table}:{entity_id}=" + src)
+                result = check_for_local_uri_and_reformat(src)
                 if result:
-                    clean_uri=result["clean_uri"]
-                    if clean_uri!=src:
+                    clean_uri = result["clean_uri"]
+                    if clean_uri != src:
                         log.info(f"\treplace image: {clean_uri} - {src}")
-                        link['src']=clean_uri
+                        link['src'] = clean_uri
                         has_edits = True
                     else:
                         log.info(f"\tkeep image: {clean_uri} - {src}")
-                    uri="public:/"+result["clean_uri"]
+                    uri = "public:/" + result["clean_uri"]
 
                     if uri in files_all:
-                        files_all[uri]["no-content"]=False
+                        files_all[uri]["no-content"] = False
                     else:
-                        files_not_registered[uri]=uri
-                else:
+                        files_not_registered[uri] = uri
 
-                    src_ext=get_external_image(src)
+                elif scrapeexternalimages == "True":
+
+                    src_ext = get_external_image(src)
                     log.info(f"\texternal image: {src_ext} - {src}")
-                    if src_ext==None:
-                        fw_ext_err.write(f'"{entity_type}", "{entity_id}", "{table}", "{user_name}","{node_url}","{src}"\n')
+                    if src_ext == None:
+                        fw_ext_err.write(
+                            f'"{entity_type}", "{entity_id}", "{table}", "{user_name}","{node_url}","{src}"\n')
                         fw_ext_err.flush()
                     else:
                         link['src'] = src_ext
@@ -111,36 +110,36 @@ def parse_text_content(config,files_all):
             for link in soup.find_all('a'):
                 if not 'href' in link.attrs:
                     continue
-                href=link.get('href')
+                href = link.get('href')
 
                 result = check_for_local_uri_and_reformat(href)
                 if result:
                     clean_uri = result["clean_uri"]
                     if clean_uri != href:
                         log.info(f"\treplace link: {clean_uri} - {href}")
-                        link['href']=clean_uri
+                        link['href'] = clean_uri
                         has_edits = True
                     else:
                         log.info(f"\tkeep link: {clean_uri} - {href}")
 
-                    uri="public:/"+result["clean_uri"]
+                    uri = "public:/" + result["clean_uri"]
                     if uri in files_all:
-                        files_all[uri]["no-content"]=False
+                        files_all[uri]["no-content"] = False
                     else:
-                        files_not_registered[uri]=uri
-                    check_url=f"{base_url}{clean_uri}"
-                    internal_url=True
+                        files_not_registered[uri] = uri
+                    check_url = f"{base_url}{clean_uri}"
+                    internal_url = True
                 else:
                     check_url = href
                     internal_url = False
 
-                url_ok=get_external_link(check_url)
-                if url_ok==False:
+                url_ok = get_external_link(check_url)
+                if url_ok == False:
                     strsf = f'"{entity_type}","{entity_id}","{table}","{user_name}","{node_url}","{internal_url}","{check_url}"\n'
                     fw_url_err.write(strsf)
                     fw_url_err.flush()
             # find drupal 9 media entities - only test ones found
-            #for link in soup.find_all('drupal-media'):
+            # for link in soup.find_all('drupal-media'):
             #    log.info(f"\tmedia - {table}:{entity_id}=" + link.get('data-entity-uuid'))
 
             # now use regexp to find any drupal tags
@@ -150,32 +149,33 @@ def parse_text_content(config,files_all):
                     drup_tag_obj = json.loads(drup_tag)
                     fid = drup_tag_obj['fid']
                     type = drup_tag_obj['type']
-                    #log.info(f"\tdrupal tag {table}:{entity_id}={type}:{fid}")
-                    uri=None
-                    for x,y in files_all.items():
+                    # log.info(f"\tdrupal tag {table}:{entity_id}={type}:{fid}")
+                    uri = None
+                    for x, y in files_all.items():
                         if y['fid'] == int(fid):
-                            uri=y['uri']
+                            uri = y['uri']
                             files_all[uri]["no-content"] = False
                             break
-                    #log.info(f"\tdrupal tag {table}:{entity_id}={type}:{fid}:{uri}")
+                    # log.info(f"\tdrupal tag {table}:{entity_id}={type}:{fid}:{uri}")
 
-                    strsf=f'"{entity_type}","{entity_id}","{table}","{user_name}","{node_url}","{fid}","{uri}"\n'
+                    strsf = f'"{entity_type}","{entity_id}","{table}","{user_name}","{node_url}","{fid}","{uri}"\n'
                     fw_d7.write(strsf)
                     fw_d7.flush()
                 except Exception as ex:
                     log.error(f"\tfailed drupal tag parse for {table}:{entity_id}")
 
-            if has_edits==True:
-                pretty_html=str(soup)
-                pretty_html=pretty_html.replace("'","''")
+            if has_edits == True:
+                pretty_html = str(soup)
+                pretty_html = pretty_html.replace("'", "''")
 
                 insert_stmt = f"update {table} set {field}='{pretty_html}' where {entity_id_field}={entity_id}"
                 with connection.cursor() as cursor2:
                     try:
                         if table_rev != "":
-                            cursor2.execute(f"select revision_id from {table_rev} where {entity_id_field}={entity_id} order by revision_id desc limit 1")
-                            revs=cursor2.fetchone()
-                            rev=revs[0]
+                            cursor2.execute(
+                                f"select revision_id from {table_rev} where {entity_id_field}={entity_id} order by revision_id desc limit 1")
+                            revs = cursor2.fetchone()
+                            rev = revs[0]
                             insert_rev_stmt = f"update {table_rev} set {field}='{pretty_html}' where {entity_id_field}={entity_id} and revision_id={rev}"
                             cursor2.execute(insert_rev_stmt)
 
@@ -185,6 +185,8 @@ def parse_text_content(config,files_all):
                         pass
                     except Exception as ex:
                         log.error(f"failed to update content:{entity_type}:{entity_id} field {table}")
+
+    log.info("finished content sweep, cleaning up.")
 
     fw_url_err.close()
     fw_d7.close()
@@ -198,11 +200,10 @@ def parse_text_content(config,files_all):
 
 
 def check_for_local_uri_and_reformat(uri):
-    result={
-        "subdomain":None,
-        "clean_uri":None
+    result = {
+        "subdomain": None,
+        "clean_uri": None
     }
-
 
     # ignore mailto: links
     if uri.startswith("mailto:") or "@" in uri:
@@ -222,16 +223,15 @@ def check_for_local_uri_and_reformat(uri):
         subdomain = match.group(1)
         relurl = match.group(2)
         if subdomain == "www":
-            #log.info(f"main - {relurl}")
+            # log.info(f"main - {relurl}")
             pass
 
         else:
-            if squash_subdomains=="True":
-                #log.info(f"subdomain - {subdomain}:{relurl}")
+            if squash_subdomains == "True":
+                # log.info(f"subdomain - {subdomain}:{relurl}")
                 result["subdomain"] = subdomain
             else:
                 return None
-
 
         result["clean_uri"] = relurl
         return result
@@ -247,44 +247,42 @@ def check_for_local_uri_and_reformat(uri):
 
 
 def get_external_image(url):
-
     try:
 
+        path_bits = url.split("/")
+        filename = path_bits[-1]
+        urlpath = "/".join(path_bits[:-1])
+        md5path = md5_str(urlpath)
 
-        path_bits=url.split("/")
-        filename=path_bits[-1]
-        urlpath="/".join(path_bits[:-1])
-        md5path=md5_str(urlpath)
-
-        basedir=path_filesystem+"/external-images/"+md5path+"/"
+        basedir = path_filesystem + "/external-images/" + md5path + "/"
         os.makedirs(basedir, exist_ok=True)
-        localpath=basedir+filename;
+        localpath = basedir + filename;
         if os.path.isfile(localpath):
-            return "/sites/default/files/external-images/" + md5path +"/"+filename
+            return "/sites/default/files/external-images/" + md5path + "/" + filename
 
-        res = requests.get(url, stream=True,timeout=url_timeout)
+        res = requests.get(url, stream=True, timeout=url_timeout)
         if res.status_code == 200:
             with open(localpath, 'wb') as f:
                 shutil.copyfileobj(res.raw, f)
-            return "/sites/default/files/external-images/" + md5path +"/"+filename
+            return "/sites/default/files/external-images/" + md5path + "/" + filename
         else:
             pass
     except Exception as ex:
         log.error(f"failed to download image:{url}")
     return None
 
-def get_external_link(url):
 
-    if check_links!="True":
+def get_external_link(url):
+    if check_links != "True":
         return True
     try:
 
         if url.startswith("mailto:") or url.startswith('#'):
             return True
         session = requests.Session()
-        if basic_auth=="True" and tld in url:
+        if basic_auth == "True" and tld in url:
             session.auth = (basic_auth_user, basic_auth_pass)
-        res = session.get(url, stream=True,timeout=url_timeout)
+        res = session.get(url, stream=True, timeout=url_timeout)
         if res.status_code == 200:
             return True
         else:

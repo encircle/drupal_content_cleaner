@@ -32,6 +32,8 @@ base_url=config['AppConfig']['baseurl']
 tld=config['AppConfig']['tld']
 tld_re=tld.replace('.','\\.')
 
+scrapeexternalimages=config['AppConfig']['scrapeexternalimages']
+
 squash_subdomains=config['AppConfig']['squash_subdomains']
 check_links=config['AppConfig']['check_links']
 
@@ -178,6 +180,7 @@ def main():
 
     content_crawler.parse_text_content(config,files_all)
 
+    log.info("processing unreferenced files")
     connection = dbapi.get_connection(config, 'Database')
     with connection.cursor() as cursor:
         # Read a single record
