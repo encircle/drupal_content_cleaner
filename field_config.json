@@ -1,0 +1,37 @@
+[
+    {
+        "table": "node__body",
+        "table_rev": "node_revision__body",
+        "field": "body_value",
+        "entity_id": "entity_id",
+        "entity_type": "node"
+    },
+    {
+        "table": "node__field_event_summary",
+        "table_rev": "node_revision__field_event_summary",
+        "field": "field_event_summary_value",
+        "entity_id": "entity_id",
+        "entity_type": "node"
+    },
+    {
+        "table": "node__field_org_description",
+        "table_rev": "node_revision__field_org_description",
+        "field": "field_org_description_value",
+        "entity_id": "entity_id",
+        "entity_type": "node"
+    },
+    {
+        "table": "node__field_summary",
+        "table_rev": "node_revision__field_summary",
+        "field": "field_summary_value",
+        "entity_id": "entity_id",
+        "entity_type": "node"
+    },
+    {
+        "table": "taxonomy_term__field_pracsol_description",
+        "table_rev": "",
+        "field": "field_pracsol_description_value",
+        "entity_id": "entity_id",
+        "entity_type": "taxonomy"
+    }
+]

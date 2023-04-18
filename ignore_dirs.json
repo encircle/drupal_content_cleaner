@@ -1,0 +1,12 @@
+[
+    "public://civicrm/",
+    "public://javascript/",
+    "public://external-images/",
+    "public://css/",
+    "public://js/",
+    "public://php/",
+    "public://styles/",
+    "public://media-icons/generic",
+    "public://video_embed_field_thumbnails",
+    "public://oembed_thumbnails"
+]
