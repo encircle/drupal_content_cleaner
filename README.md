@@ -4,7 +4,34 @@
 You have been forwarned! No express warranty is implied - Encircle are not liable for any damage done.
 
 ## Overview
+This tool was developed to help a client who had migrated an old Drupal 7 site to Drupal 9 and was desperately in need of some automation to help clean up and also audit  the vast swathes of imported legacy content (all Nodes, Taxonomies and User entities)
 
+Encircle are publishing this as an open source tool in the hope that these effort may prove useful to the wider community.
+
+### What this tool actually does?
+Well, it does several things that fall broadly into two categories of content auditing and content cleaning. 
+What's really useful is that the tool uses the beautifulsoup python package to assess files referenced by hyperlinks and image tags inside of text/html field content as well as files referenced directly by file entity fields.
+
+#### Auditing
+First, the tool assesses the files registered and/or referenced in Drupal and provides audit reports (as csv spreadsheets) itemising the following:
+- A list of all the missing files registered in Drupal that don't exist on the file system (in `[DRUPAL_ROOT]/sites/default/files`)
+- A list of all the existing files in `[DRUPAL_ROOT]/sites/default/files` that are not registered in Drupal (excluding any pre-configured cache directories such as `css` or `jss`)
+- A list of all the existing files in `[DRUPAL_ROOT]/sites/default/files` that are not registered in Drupal but are referenced in text/HTML content fields 
+- A list of all registered files in `[DRUPAL_ROOT]/sites/default/files` that are not referenced in any fields (including in image an hyperlink tags in text/html content fields)
+- A list of hyperlinks in any text/html content fields that no longer resolve to a valid location
+- A list of image urls (in the <img src attirbute) that no longer resolve to a valid location
+- A list of all Drupal 7 media tokens reference in text/html field (no longer supported in >D7)
+
+### Content Cleaning
+Secondly the tool makes changes to text/html content (entities and fields to process are user configurable) as follows:  
+
+- Converts any absolute hyperlinks in text/html fields to relative links, if they belong to the drupal site in question
+- Converts any absolute image src attributes in text/html fields to relative links, if they belong to the drupal site in question
+- Optionally can convert these image and hyperlink urls for all subdomains of the top level domain used by the site.
+- For any external image urls, these will be downloaded and stored in `[DRUPAL_ROOT]/sites/default/files/external-images/[MD5 hash path]/[FILE-NAME]` and the image src attributes are updated to correspond to these local file locations.
+- Deletes all files (both the actual file and the Drupal file registration entry) not referenced by content (including inside text/html fields) -  excluding any pre-configured cache directories such as css or jss of course!
+
+ 
 
 
 ## Install
