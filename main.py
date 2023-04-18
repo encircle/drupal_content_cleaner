@@ -206,6 +206,7 @@ def main():
                 nocontent=y["no-content"]
                 xx=x.removeprefix("public://")
                 if noent and nocontent:
+                    log.info(f" \tdelete file: {uri}")
                     sql1 = f"delete from file_managed where fid={fid}"
                     sql2= f"delete from file_usage where fid={fid} and module='file'"
                     try:
