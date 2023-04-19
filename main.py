@@ -189,7 +189,7 @@ def main():
         #with open("./report/files_registered_unused.sh","w") as fwb:
         #fwb.write("#!/bin/sh\n")
         with open("./report/files_registered_unused.csv", "w") as fw:
-            fw.write("filepath,not in field,not in content\n")
+            fw.write("filepath\n")
             for x,y in files_all.items():
 
                 ignore=False
@@ -223,7 +223,7 @@ def main():
                         except Exception as ex:
                             log.error(f"failed to delete file from filesystem: {uri}")
 
-                    fw.write(f'"{x}","{noent}","{nocontent}"\n')
+                    fw.write(f'"{x}"\n')
                     #fwb.write(f'rm "{path_filesystem}/{xx}"\n')
     connection.close()
 
