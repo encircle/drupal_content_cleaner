@@ -89,6 +89,12 @@ check_links=True
 # to an md5 hased path under this directory and `<img src=` attributes will be updated accordingly
 scrapeexternalimages=True
 
+# delete and unregister all files unreferenced in content
+delete_unreferenced_files=False
+
+#check all urls in content for validity
+check_links=True
+
 #basic auth credentials for the site - if basic_auth=True
 basic_auth=False
 basic_auth_user=admin

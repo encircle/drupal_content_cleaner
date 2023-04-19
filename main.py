@@ -37,6 +37,7 @@ scrapeexternalimages=config['AppConfig']['scrapeexternalimages']
 squash_subdomains=config['AppConfig']['squash_subdomains']
 check_links=config['AppConfig']['check_links']
 
+delete_unreferenced_files=config['AppConfig']['delete_unreferenced_files']
 
 basic_auth=config['AppConfig']['basic_auth']
 basic_auth_user=config['AppConfig']['basic_auth_user']
@@ -206,20 +207,21 @@ def main():
                 nocontent=y["no-content"]
                 xx=x.removeprefix("public://")
                 if noent and nocontent:
-                    log.info(f" \tdelete file: {uri}")
-                    sql1 = f"delete from file_managed where fid={fid}"
-                    sql2= f"delete from file_usage where fid={fid} and module='file'"
-                    try:
-                        cursor.execute(sql1)
-                        cursor.execute(sql2)
-                        connection.commit()
-                    except Exception as ex:
-                        log.error(f"failed to delete file from db: {uri}")
+                    if delete_unreferenced_files=="True":
+                        log.info(f" \tdelete file: {uri}")
+                        sql1 = f"delete from file_managed where fid={fid}"
+                        sql2= f"delete from file_usage where fid={fid} and module='file'"
+                        try:
+                            cursor.execute(sql1)
+                            cursor.execute(sql2)
+                            connection.commit()
+                        except Exception as ex:
+                            log.error(f"failed to delete file from db: {uri}")
 
-                    try:
-                        os.remove(path_filesystem+""+uri.removeprefix("public:/"))
-                    except Exception as ex:
-                        log.error(f"failed to delete file from filesystem: {uri}")
+                        try:
+                            os.remove(path_filesystem+""+uri.removeprefix("public:/"))
+                        except Exception as ex:
+                            log.error(f"failed to delete file from filesystem: {uri}")
 
                     fw.write(f'"{x}","{noent}","{nocontent}"\n')
                     #fwb.write(f'rm "{path_filesystem}/{xx}"\n')
