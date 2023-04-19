@@ -1,4 +1,6 @@
 # Drupal Content Cleaner
+A highly configurable file and link checker and cleaner for Drupal v8 and above
+
 
 **WARNING** this will make irreversible changes to your Drupal instance. Please, please take a back up of your Drupal database and your  `sites/default/files` directory.
 You have been forwarned! No express warranty is implied - Encircle are not liable for any damage done.
