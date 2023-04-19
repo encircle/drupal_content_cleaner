@@ -52,9 +52,12 @@ def parse_text_content(config, files_all):
             query = f"select field.{field},field.{entity_id_field} from {table} field"  # " LIMIT 100"
 
         log.info(f"Parsing Field {field} in table {table}")
+        connection = dbapi.get_connection(config, 'Database')
         with connection.cursor() as cursor:
             cursor.execute(query)
             records = cursor.fetchall()
+        connection.close()
+
         for record in records:  #:= cursor.fetchone():
             has_edits = False
             content = record[0]
@@ -169,6 +172,7 @@ def parse_text_content(config, files_all):
                 pretty_html = pretty_html.replace("'", "''")
 
                 insert_stmt = f"update {table} set {field}='{pretty_html}' where {entity_id_field}={entity_id}"
+                connection = dbapi.get_connection(config, 'Database')
                 with connection.cursor() as cursor2:
                     try:
                         if table_rev != "":
@@ -185,7 +189,7 @@ def parse_text_content(config, files_all):
                         pass
                     except Exception as ex:
                         log.error(f"failed to update content:{entity_type}:{entity_id} field {table}")
-
+                connection.close()
     log.info("finished content sweep, cleaning up.")
 
     fw_url_err.close()

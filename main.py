@@ -223,6 +223,7 @@ def main():
 
                     fw.write(f'"{x}","{noent}","{nocontent}"\n')
                     #fwb.write(f'rm "{path_filesystem}/{xx}"\n')
+    connection.close()
 
 
 

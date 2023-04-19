@@ -16,7 +16,7 @@ def get_connection(config,database):
             user=myuser,
             passwd=mypasswd,
             db=mydb,
-            #connect_timeout=31536000,
+            connect_timeout=31536000,
         )
 
         cursor = connection.cursor()
