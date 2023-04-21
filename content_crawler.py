@@ -97,6 +97,11 @@ def parse_text_content(config, files_all):
                         files_all[uri]["no-content"] = False
                     else:
                         files_not_registered[uri] = uri
+                        check_filepath=f"{path_filesystem}{clean_uri}"
+                        if not os.path.exists(check_filepath):
+                            fw_ext_err.write(
+                                f'"{entity_type}", "{entity_id}", "{table}", "{user_name}","{node_url}","{src}"\n')
+                            fw_ext_err.flush()
 
                 elif scrapeexternalimages == "True":
 
