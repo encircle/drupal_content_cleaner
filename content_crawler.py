@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from main import path_filesystem, base_url, tld, tld_re, squash_subdomains, check_links, basic_auth, basic_auth_pass, \
     basic_auth_user, scrapeexternalimages
 
-url_timeout = (2.0, 30.0)
+url_timeout = (10.0, 30.0)
 
 f = open('field_config.json')
 text_content_fields = json.load(f)
