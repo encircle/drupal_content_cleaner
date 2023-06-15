@@ -8,6 +8,7 @@ import requests, shutil
 import hashlib
 
 from bs4 import BeautifulSoup
+from urllib.parse import unquote,quote
 
 from main import path_filesystem, base_url, tld, tld_re, squash_subdomains, check_links, basic_auth, basic_auth_pass, \
     basic_auth_user, scrapeexternalimages
@@ -17,6 +18,8 @@ url_timeout = (10.0, 30.0)
 f = open('field_config.json')
 text_content_fields = json.load(f)
 
+def remove_prefix(text, prefix):
+    return text[text.startswith(prefix) and len(prefix):]
 
 def parse_text_content(config, files_all):
     files_not_registered = {}
@@ -26,7 +29,7 @@ def parse_text_content(config, files_all):
     fw_d7.flush()
 
     fw_ext_err = open("./report/files_external_error.csv", "w")
-    fw_ext_err.write("entity type,entity id,field,owner,node url,uri\n")
+    fw_ext_err.write("entity type,entity id,field,owner,node url,internal,uri\n")
     fw_ext_err.flush()
 
     fw_url_err = open("./report/files_url_error.csv", "w")
@@ -91,16 +94,23 @@ def parse_text_content(config, files_all):
                         has_edits = True
                     else:
                         log.info(f"\tkeep image: {clean_uri} - {src}")
-                    uri = "public:/" + result["clean_uri"]
 
+                    naked_uri = remove_prefix(clean_uri, "/sites/default/files")
+                    if "?" in naked_uri:
+                        naked_uri=naked_uri.split("?")[0]
+                    naked_uri=unquote(naked_uri)
+
+                    uri = "public:/" + naked_uri
                     if uri in files_all:
                         files_all[uri]["no-content"] = False
                     else:
-                        files_not_registered[uri] = uri
-                        check_filepath=f"{path_filesystem}{clean_uri}"
+
+                        if not uri.startswith("public://external-images/"):
+                            files_not_registered[uri] = uri
+                        check_filepath=f"{path_filesystem}{naked_uri}"
                         if not os.path.exists(check_filepath):
                             fw_ext_err.write(
-                                f'"{entity_type}", "{entity_id}", "{table}", "{user_name}","{node_url}","{src}"\n')
+                                f'"{entity_type}", "{entity_id}", "{table}", "{user_name}","{node_url}","True","{src}"\n')
                             fw_ext_err.flush()
 
                 elif scrapeexternalimages == "True":
@@ -109,7 +119,7 @@ def parse_text_content(config, files_all):
                     log.info(f"\texternal image: {src_ext} - {src}")
                     if src_ext == None:
                         fw_ext_err.write(
-                            f'"{entity_type}", "{entity_id}", "{table}", "{user_name}","{node_url}","{src}"\n')
+                            f'"{entity_type}", "{entity_id}", "{table}", "{user_name}","{node_url}","False","{src}"\n')
                         fw_ext_err.flush()
                     else:
                         link['src'] = src_ext
@@ -130,11 +140,22 @@ def parse_text_content(config, files_all):
                     else:
                         log.info(f"\tkeep link: {clean_uri} - {href}")
 
-                    uri = "public:/" + result["clean_uri"]
-                    if uri in files_all:
-                        files_all[uri]["no-content"] = False
-                    else:
-                        files_not_registered[uri] = uri
+
+                    if clean_uri.startswith("/sites/default/files"):
+
+                        naked_uri = remove_prefix(clean_uri, "/sites/default/files")
+                        if "?" in naked_uri:
+                            naked_uri = naked_uri.split("?")[0]
+                        naked_uri = unquote(naked_uri)
+
+                        uri = "public:/" + naked_uri
+
+                        if uri in files_all:
+                            files_all[uri]["no-content"] = False
+                        else:
+                            if not uri.startswith("public://external-images/"):
+                                files_not_registered[uri] = uri
+
                     check_url = f"{base_url}{clean_uri}"
                     internal_url = True
                 else:
@@ -214,6 +235,7 @@ def check_for_local_uri_and_reformat(uri):
         "clean_uri": None
     }
 
+
     # ignore mailto: links
     if uri.startswith("mailto:") or "@" in uri:
         return None
@@ -262,6 +284,16 @@ def get_external_image(url):
         filename = path_bits[-1]
         urlpath = "/".join(path_bits[:-1])
         md5path = md5_str(urlpath)
+
+        if "?" in filename:
+            fparts=filename.partition("?")
+
+            fnameparts=fparts[0].rpartition(".")
+
+            filename=""+fnameparts[0]+"-"+md5_str(fparts[2])+"."+fnameparts[2]
+            pass
+
+        filename=unquote(filename)
 
         basedir = path_filesystem + "/external-images/" + md5path + "/"
         os.makedirs(basedir, exist_ok=True)
