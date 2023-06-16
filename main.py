@@ -172,63 +172,62 @@ def main():
     os.makedirs("./report", exist_ok=True);
     if d7_tag_mode=="True":
         domain_parser.parse_domains(config)
-    else:
 
 
-        files_real=list_real_files()
-        files_all=get_db_all_files()
-        compare_real_and_registered_files(files_real, files_all)
+    files_real=list_real_files()
+    files_all=get_db_all_files()
+    compare_real_and_registered_files(files_real, files_all)
 
-        get_db_unused_files(files_all)
+    get_db_unused_files(files_all)
 
 
-        content_crawler.parse_text_content(config,files_all)
+    content_crawler.parse_text_content(config,files_all)
 
-        log.info("processing unreferenced files")
-        connection = dbapi.get_connection(config, 'Database')
-        with connection.cursor() as cursor:
-            # Read a single record
+    log.info("processing unreferenced files")
+    connection = dbapi.get_connection(config, 'Database')
+    with connection.cursor() as cursor:
+        # Read a single record
 
-            #with open("./report/files_registered_unused.sh","w") as fwb:
-            #fwb.write("#!/bin/sh\n")
-            with open("./report/files_registered_unused.csv", "w") as fw:
-                fw.write("filepath\n")
-                for x,y in files_all.items():
+        #with open("./report/files_registered_unused.sh","w") as fwb:
+        #fwb.write("#!/bin/sh\n")
+        with open("./report/files_registered_unused.csv", "w") as fw:
+            fw.write("filepath\n")
+            for x,y in files_all.items():
 
-                    ignore=False
-                    for z in ignore_dirs:
-                        if x.startswith(z):
-                            ignore=True
-                            break
+                ignore=False
+                for z in ignore_dirs:
+                    if x.startswith(z):
+                        ignore=True
+                        break
 
-                    if ignore==True:
-                        continue
+                if ignore==True:
+                    continue
 
-                    fid=y['fid']
-                    uri=y['uri']
-                    noent=y["no-entity"]
-                    nocontent=y["no-content"]
-                    xx=x.removeprefix("public://")
-                    if noent and nocontent:
-                        if delete_unreferenced_files=="True":
-                            log.info(f" \tdelete file: {uri}")
-                            sql1 = f"delete from file_managed where fid={fid}"
-                            sql2= f"delete from file_usage where fid={fid} and module='file'"
-                            try:
-                                cursor.execute(sql1)
-                                cursor.execute(sql2)
-                                connection.commit()
-                            except Exception as ex:
-                                log.error(f"failed to delete file from db: {uri}")
+                fid=y['fid']
+                uri=y['uri']
+                noent=y["no-entity"]
+                nocontent=y["no-content"]
+                xx=x.removeprefix("public://")
+                if noent and nocontent:
+                    if delete_unreferenced_files=="True":
+                        log.info(f" \tdelete file: {uri}")
+                        sql1 = f"delete from file_managed where fid={fid}"
+                        sql2= f"delete from file_usage where fid={fid} and module='file'"
+                        try:
+                            cursor.execute(sql1)
+                            cursor.execute(sql2)
+                            connection.commit()
+                        except Exception as ex:
+                            log.error(f"failed to delete file from db: {uri}")
 
-                            try:
-                                os.remove(path_filesystem+""+uri.removeprefix("public:/"))
-                            except Exception as ex:
-                                log.error(f"failed to delete file from filesystem: {uri}")
+                        try:
+                            os.remove(path_filesystem+""+uri.removeprefix("public:/"))
+                        except Exception as ex:
+                            log.error(f"failed to delete file from filesystem: {uri}")
 
-                        fw.write(f'"{x}"\n')
-                        #fwb.write(f'rm "{path_filesystem}/{xx}"\n')
-        connection.close()
+                    fw.write(f'"{x}"\n')
+                    #fwb.write(f'rm "{path_filesystem}/{xx}"\n')
+    connection.close()
 
 
 
