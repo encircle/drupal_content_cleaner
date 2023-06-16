@@ -29,11 +29,11 @@ def parse_text_content(config, files_all):
     fw_d7.flush()
 
     fw_ext_err = open("./report/files_external_error.csv", "w")
-    fw_ext_err.write("entity type,entity id,field,owner,node url,internal,uri\n")
+    fw_ext_err.write("entity type,bundle,entity id,field,owner,node url,internal,uri\n")
     fw_ext_err.flush()
 
     fw_url_err = open("./report/files_url_error.csv", "w")
-    fw_url_err.write("entity type,entity id,field,owner,node url,internal,uri\n")
+    fw_url_err.write("entity type,bundle,entity id,field,owner,node url,internal,uri\n")
     fw_url_err.flush()
 
     connection = dbapi.get_connection(config, 'Database')
@@ -47,7 +47,7 @@ def parse_text_content(config, files_all):
         # query = f"select {field},{entity_id} from {table} where entity_id=32090"
 
         if entity_type == "node":
-            query = f"""select field.{field},field.{entity_id_field},nfd.uid,ufd.name,ufd.mail from {table} field
+            query = f"""select field.{field},field.{entity_id_field},nfd.uid,ufd.name,ufd.mail,nfd.type from {table} field
             join node_field_data nfd on field.{entity_id_field}=nfd.nid
             join users_field_data ufd on ufd.uid=nfd.uid  
             """
@@ -72,9 +72,11 @@ def parse_text_content(config, files_all):
             if entity_type == "node":
                 user_name = record[3]
                 user_email = record[4]
+                bundle=record[5]
             else:
                 user_name = ''
                 user_email = ''
+                bundle = ''
 
             log.info(f"Parsing entity: {entity_type} - {entity_id} - field: {field}")
 
@@ -110,7 +112,7 @@ def parse_text_content(config, files_all):
                         check_filepath=f"{path_filesystem}{naked_uri}"
                         if not os.path.exists(check_filepath):
                             fw_ext_err.write(
-                                f'"{entity_type}", "{entity_id}", "{table}", "{user_name}","{node_url}","True","{src}"\n')
+                                f'"{entity_type}","{bundle}", "{entity_id}", "{table}", "{user_name}","{node_url}","True","{src}"\n')
                             fw_ext_err.flush()
 
                 elif scrapeexternalimages == "True":
@@ -119,7 +121,7 @@ def parse_text_content(config, files_all):
                     log.info(f"\texternal image: {src_ext} - {src}")
                     if src_ext == None:
                         fw_ext_err.write(
-                            f'"{entity_type}", "{entity_id}", "{table}", "{user_name}","{node_url}","False","{src}"\n')
+                            f'"{entity_type}","{bundle}", "{entity_id}", "{table}", "{user_name}","{node_url}","False","{src}"\n')
                         fw_ext_err.flush()
                     else:
                         link['src'] = src_ext
@@ -164,7 +166,7 @@ def parse_text_content(config, files_all):
 
                 url_ok = get_external_link(check_url)
                 if url_ok == False:
-                    strsf = f'"{entity_type}","{entity_id}","{table}","{user_name}","{node_url}","{internal_url}","{check_url}"\n'
+                    strsf = f'"{entity_type}","{bundle}","{entity_id}","{table}","{user_name}","{node_url}","{internal_url}","{check_url}"\n'
                     fw_url_err.write(strsf)
                     fw_url_err.flush()
             # find drupal 9 media entities - only test ones found
