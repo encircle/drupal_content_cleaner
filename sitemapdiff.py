@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 
 SOURCE_SITEMAP_URL="https://www3.permaculture.org.uk/sitemap.xml"
 TARGET_SITEMAP_URL="https://dev.permaculture.org.uk/sitemap.xml"
-TARGET_BASE_URL="https://dev.permaculture.org.uk"
+
 nowtime = datetime.datetime.now().isoformat().replace(":", "_").split(".")[0]
 
 os.makedirs('report', exist_ok=True)
@@ -15,6 +15,10 @@ config = cfg.ConfigParser()
 config.read("config.ini")
 ba_user=config['AppConfig']['basic_auth_user']
 ba_pass=config['AppConfig']['basic_auth_pass']
+
+
+TARGET_BASE_URL=config['AppConfig']['baseurl']
+
 log_level = config['Logging']['level']
 if log_level == 'info':
     ilog_level = logging.INFO
