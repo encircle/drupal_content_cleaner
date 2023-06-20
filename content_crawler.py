@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import unquote,quote
 
 from main import path_filesystem, base_url, tld, tld_re, squash_subdomains, check_links, basic_auth, basic_auth_pass, \
-    basic_auth_user, scrapeexternalimages
+    basic_auth_user, scrapeexternalimages,filter_field
 
 url_timeout = (10.0, 30.0)
 
@@ -47,10 +47,20 @@ def parse_text_content(config, files_all):
         # query = f"select {field},{entity_id} from {table} where entity_id=32090"
 
         if entity_type == "node":
-            query = f"""select field.{field},field.{entity_id_field},nfd.uid,ufd.name,ufd.mail,nfd.type from {table} field
-            join node_field_data nfd on field.{entity_id_field}=nfd.nid
-            join users_field_data ufd on ufd.uid=nfd.uid  
-            """
+
+            if filter_field:
+                query = f"""select field.{field},field.{entity_id_field},nfd.uid,ufd.name,ufd.mail,nfd.type,dau.{filter_field}_value from {table} field
+                join node_field_data nfd on field.{entity_id_field}=nfd.nid
+                join users_field_data ufd on ufd.uid=nfd.uid 
+                left join node__{filter_field} dau on dau.entity_id=nfd.nid  
+                """
+
+            else:
+
+                query = f"""select field.{field},field.{entity_id_field},nfd.uid,ufd.name,ufd.mail,nfd.type from {table} field
+                join node_field_data nfd on field.{entity_id_field}=nfd.nid
+                join users_field_data ufd on ufd.uid=nfd.uid 
+                """
         else:
             query = f"select field.{field},field.{entity_id_field} from {table} field"  # " LIMIT 100"
 
@@ -73,6 +83,11 @@ def parse_text_content(config, files_all):
                 user_name = record[3]
                 user_email = record[4]
                 bundle=record[5]
+                if filter_field:
+                    ignore = record[6]
+                    if ignore == 1:
+                        log.info(f"Skipping entity: {entity_type} - {entity_id} - filter field: {filter_field}")
+                        continue
             else:
                 user_name = ''
                 user_email = ''

@@ -26,6 +26,11 @@ else:
 
 d7_tag_mode=config['AppConfig']['d7_tag_mode']
 path_filesystem=config['AppConfig']['basedir']
+filter_by_field=config['AppConfig']['filter_by_field']
+if filter_by_field=="True":
+    filter_field=config['AppConfig']['filter_field']
+else:
+    filter_field=None
 
 base_url=config['AppConfig']['baseurl']
 
