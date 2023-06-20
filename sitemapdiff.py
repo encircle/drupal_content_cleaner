@@ -97,7 +97,7 @@ def inspect_differences(diff_sitemap):
                 logging.debug(f"validating url before excluding: {url} ")
                 resp = session.get(TARGET_BASE_URL + url)
 
-                if resp.status_code<400:
+                if resp.status_code!=404:
                     logging.error(f"url: {url} exists on target, excluding from 410 list")
                     diff_sitemap.remove(url)
                 pass
